@@ -5,4 +5,10 @@ dynamic = ["version"]
 dependencies = [
   "homeassistant",
   "pre-commit",
+  "packaging"
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
 ]
