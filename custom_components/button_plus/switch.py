@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .button_plus_api.model import ConnectorEnum
+from .button_plus_api.connector_type import ConnectorType
 from . import ButtonPlusHub
 
 from .const import DOMAIN, MANUFACTURER
@@ -25,21 +25,21 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Add switches for passed config_entry in HA."""
-
     hub: ButtonPlusHub = hass.data[DOMAIN][config_entry.entry_id]
 
     active_connectors = [
-        connector.connector_id
-        for connector in hub.config.info.connectors
-        if connector.connector_type_enum() in [ConnectorEnum.DISPLAY, ConnectorEnum.BAR]
+        connector.identifier()
+        for connector in hub.config.connectors_for(
+            ConnectorType.DISPLAY, ConnectorType.BAR
+        )
     ]
 
     buttons = filter(
-        lambda b: b.button_id // 2 in active_connectors, hub.config.mqtt_buttons
+        lambda b: b.button_id // 2 in active_connectors, hub.config.buttons()
     )
 
     for button in buttons:
-        # _LOGGER.debug(f"Creating switch with parameters: {button.button_id} {button.label} {hub.hub_id}")
+        # _LOGGER.debug(f"Creating switch with parameters: {button.button_id} {button.label} {hub.identifier}")
         switches.append(ButtonPlusSwitch(button.button_id, hub))
 
     async_add_entities(switches)
@@ -56,7 +56,7 @@ class ButtonPlusSwitch(SwitchEntity):
         self._attr_name = f"switch-{btn_id}"
         self._name = f"Button {btn_id}"
         self._device_class = SwitchDeviceClass.SWITCH
-        self._connector = hub.config.info.connectors[btn_id // 2]
+        self._connector = hub.config.connectors()[btn_id // 2]
 
     @property
     def name(self) -> str:
@@ -71,23 +71,23 @@ class ButtonPlusSwitch(SwitchEntity):
             "manufacturer": MANUFACTURER,
         }
 
-        match self._connector.connector_type_enum():
-            case ConnectorEnum.BAR:
+        match self._connector.connector_type():
+            case ConnectorType.BAR:
                 device_info["name"] = (
-                    f"{self._hub._name} BAR Module {self._connector.connector_id}"
+                    f"{self._hub.name} BAR Module {self._connector.identifier()}"
                 )
                 device_info["connections"] = {
-                    ("bar_module", self._connector.connector_id)
+                    ("bar_module", self._connector.identifier())
                 }
                 device_info["model"] = "BAR Module"
                 device_info["identifiers"] = {
                     (
                         DOMAIN,
-                        f"{self._hub.hub_id}_{self._btn_id}_bar_module_{self._connector.connector_id}",
+                        f"{self._hub.hub_id}_{self._btn_id}_bar_module_{self._connector.identifier()}",
                     )
                 }
-            case ConnectorEnum.DISPLAY:
-                device_info["name"] = f"{self._hub._name} Display Module"
+            case ConnectorType.DISPLAY:
+                device_info["name"] = f"{self._hub.name} Display Module"
                 device_info["connections"] = {("display_module", 1)}
                 device_info["model"] = "Display Module"
                 device_info["identifiers"] = {

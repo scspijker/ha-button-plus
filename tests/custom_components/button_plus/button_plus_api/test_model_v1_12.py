@@ -1,32 +1,35 @@
-from custom_components.button_plus.button_plus_api.model_v1_12 import DeviceConfiguration
+from custom_components.button_plus.button_plus_api.model_v1_12 import (
+    DeviceConfiguration,
+)
 import json
 
 
 def test_model_v1_12_from_to_json_should_be_same():
     # Load the JSON file
-    with open('resource/physicalconfig1.12.1.json') as file:
-        json_data = json.loads(file.read())
+    with open("resource/physicalconfig1.12.1.json") as file:
+        json_string = file.read()
+        json_data = json.loads(json_string)
 
     # Parse the JSON data into a DeviceConfiguration object
-    device_config = DeviceConfiguration.from_json(json_data)
+    device_config = DeviceConfiguration.from_dict(json_data)
 
     # Serialize the DeviceConfiguration object back into a JSON string
-    json_string = device_config.to_json()
+    new_json_string = device_config.to_json()
 
-    original_json_data = json_data
-    new_json_data = json.loads(json_string)
+    # Parse the JSON data into a DeviceConfiguration object
+    new_json_data = json.loads(new_json_string)
 
-    # Assert that the JSON strings are the same
-    assert original_json_data == new_json_data
+    # Assert that the JSON data is the same
+    assert json_data == new_json_data
 
 
 def test_model_v1_12():
     # Load the JSON file
-    with open('resource/physicalconfig1.12.1.json') as file:
+    with open("resource/physicalconfig1.12.1.json") as file:
         json_data = json.loads(file.read())
 
     # Parse the JSON data into a DeviceConfiguration object
-    device_config = DeviceConfiguration.from_json(json_data)
+    device_config = DeviceConfiguration.from_dict(json_data)
 
     # Assert the values from the parsed DeviceConfiguration object
     assert device_config.info.device_id == "btn_4584b8"
@@ -38,7 +41,7 @@ def test_model_v1_12():
     # Assert the values from the parsed Core object
     assert device_config.core.name == "btn_4584b8"
     assert device_config.core.location == "Room 1"
-    assert device_config.core.auto_backup == True
+    assert device_config.core.auto_backup
     assert device_config.core.brightness == 80
     assert device_config.core.color == 16765791
     assert device_config.core.statusbar == 2
